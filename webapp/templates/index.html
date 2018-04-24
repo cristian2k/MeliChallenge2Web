@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistema de Busqueda de Correos - Ingreso</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="static/bootstrap.min.js"></script>
+</head>
+<body>
+    <link rel="stylesheet" href="/static/bootstrap.min.css" type="text/css">
+    {% block body %}
+    {% if session['logueado'] %}
+    <p>Ya inicio sesión!</p>
+    {% else %}
+    <form id="formulario">
+        <br><br>
+        <div class="row">
+            <div class="col-3 col-md-3 col-lg-3"></div>
+            <div class="col-6 col-md-6 col-lg-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h4>Bienvenido - Ingrese correo y contraseña</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <div class="control-group">
+                                <label>Dirección de correo</label>
+                                <input id="username" type="email" class="form-control" placeholder="correo@gmail.com">
+                            </div>
+                            <br>
+                            <div class="control-group">
+                                <label>Contraseña:</label>
+                                <input id="password" type="password" class="form-control" placeholder="Contraseña">
+                            </div>
+                            <br>
+                            <div class="control-group">
+                                <label>Palabra o frase a buscar:</label>
+                                <input id="palabra" type="text" class="form-control" value="devops">
+                            </div>
+                            <br>
+                            <button id="btnbusqueda" type="button" class="btn btn-primary" onclick="iniciaproceso()">
+                                Realizar búsqueda
+                            </button>
+                            <button id="btnprogreso" type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalProgreso" disabled>
+                                Ver progreso
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-3 col-md-3 col-lg-3"></div>
+        </div>
+    </form>
+
+    <div class="modal fade" id="modalProgreso" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="exampleModalLabel">Realizando búsqueda</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p id="parcial">Progreso parcial:</p>
+                    <div class="progress" style="height: 35px;">
+                        <div id="porparcial" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <br>
+                    <p id="total">Progreso total:</p>
+                    <div class="progress" style="height: 35px;">
+                        <div id="portotal" class="progress-bar" role="progressbar" style="width: 0%;" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Ocultar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+    {% endblock %}
+    {% with messages = get_flashed_messages(with_categories=false) %}
+        {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+            </ul>
+        {% endif %}
+    {% endwith %}
+    <script type="text/javascript">
+
+        var url = window.location.href;
+
+        function iniciaproceso() {
+
+            var datos = new Object();
+            datos.username = document.getElementById("username").value;
+            datos.password = document.getElementById("password").value;
+            datos.palabra = document.getElementById("palabra").value;
+
+            if (datos.username == "" || datos.password == "" || datos.palabra == "") {
+                alert('Complete todos los campos antes de continuar.')
+            } else {
+
+                var jdatos = JSON.stringify(datos);
+                $.ajax({
+                    url: url + "inicio",
+                    type:"POST",
+                    data:jdatos,
+                    contentType:"application/json; charset=utf-8",
+                    dataType:"json",
+                    success: function(response) {
+                        var respuesta = response.responseJSON;
+                        activarmodalprogreso();
+                    },
+                    error: function(response) {
+                        var respuesta = response.responseJSON;
+                        var descripcion = respuesta.descripcion;
+                        alert(descripcion);
+                        document.getElementById("password").setAttribute("value","");
+                    }
+                });
+
+            }
+        }
+
+        function activarmodalprogreso() {
+            document.getElementById("btnbusqueda").setAttribute("disabled","true");
+            document.getElementById("btnprogreso").removeAttribute("disabled");
+            $("#modalProgreso").modal("show");
+            get_progress();
+        }
+
+        function terminar_proceso() {
+            $.ajax({
+                    url: url + "terminar",
+                    type:"GET",
+                    success: function(response) {
+                        return true;
+                    },
+                    error: function(response) {
+                        return false;
+                    }
+                });
+        }
+
+        function get_progress() {
+
+            var miEstadoParcial = document.getElementById("parcial");
+            var miEstadoTotal = document.getElementById("total");
+            var miBarraParcial = document.getElementById("porparcial");
+            var miBarraTotal = document.getElementById("portotal");
+            var estado = "";
+            var msjtotal;
+            var msjparcial;
+            var portotal;
+            var porparcial;
+
+            setTimeout(function run() {
+                traerDatos();
+                if (estado != 'Completado') {
+                    setTimeout(run, 1000);
+                } else
+                {
+                    terminar_proceso();
+                    $("#modalProgreso").modal("hide");
+                    alert("EL proceso se completo con éxito");
+                    document.getElementById("btnbusqueda").removeAttribute("disabled");
+                    document.getElementById("btnprogreso").setAttribute("disabled","true");
+                    document.getElementById("formulario").reset();
+                    miEstadoParcial.innerHTML = "Progreso parcial: ";
+                    miEstadoTotal.innerHTML = "Progreso total: ";
+                    miBarraParcial.style = "width: 0%;";
+                    miBarraTotal.style = "width: 0%;";
+                    miBarraParcial.setAttribute("aria-valuenow","0");
+                    miBarraTotal.setAttribute("aria-valuenow","0");
+                    miBarraParcial.innerHTML = "";
+                    miBarraTotal.innerHTML = "";
+                }
+            }, 1000);
+
+            function traerDatos() {
+                $.getJSON(url + "progreso",function(data){
+                    console.log(data);
+                    estado = data.estado;
+                    portotal = data.progreso.porcentage_total;
+                    porparcial = data.progreso.porcentage_parcial;
+                    msjtotal = data.progreso.mensaje_total;
+                    msjparcial = data.progreso.mensaje_parcial;
+                    miEstadoParcial.innerHTML = "Progreso parcial: "+ msjparcial;
+                    miEstadoTotal.innerHTML = "Progreso total: " + msjtotal;
+                    miBarraParcial.style = "width: " + porparcial + "%;";
+                    miBarraTotal.style = "width: " + portotal + "%;";
+                    miBarraParcial.setAttribute("aria-valuenow",porparcial);
+                    miBarraTotal.setAttribute("aria-valuenow",portotal);
+                    miBarraParcial.innerHTML = porparcial + "%";
+                    miBarraTotal.innerHTML = portotal + "%";
+                });
+            }
+        }
+
+    </script>
+</body>
+</html>

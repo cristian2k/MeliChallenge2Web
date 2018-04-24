@@ -1,0 +1,17 @@
+{
+  "mysql_cfg" :
+  {
+    "host": "127.0.0.1",
+    "db": "dbEmailChallenge",
+    "user": "dbadmin",
+    "passwd": "Password123",
+    "port": "3306",
+    "connect_timeout": "15"
+  },
+  "imap_cfg":
+  {
+    "imap_server": "imap.gmail.com",
+    "imap_port": "993",
+    "use_ssl": "True"
+  }
+}
