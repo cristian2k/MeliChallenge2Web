@@ -38,7 +38,7 @@
                                 <input id="palabra" type="text" class="form-control" value="devops">
                             </div>
                             <br>
-                            <button id="btnbusqueda" type="button" class="btn btn-primary" onclick="iniciaproceso()">
+                            <button id="btnbusqueda" type="submit" class="btn btn-primary">
                                 Realizar búsqueda
                             </button>
                             <button id="btnprogreso" type="button" class="btn btn-secondary" data-toggle="modal" data-target="#modalProgreso" disabled>
@@ -93,8 +93,10 @@
     <script type="text/javascript">
 
         var url = window.location.href;
+        var formulario = document.getElementById("formulario");
 
-        function iniciaproceso() {
+        function iniciaproceso(event) {
+            if (event.preventDefault) event.preventDefault();
 
             var datos = new Object();
             datos.username = document.getElementById("username").value;
@@ -104,7 +106,6 @@
             if (datos.username == "" || datos.password == "" || datos.palabra == "") {
                 alert('Complete todos los campos antes de continuar.')
             } else {
-
                 var jdatos = JSON.stringify(datos);
                 $.ajax({
                     url: url + "inicio",
@@ -123,8 +124,8 @@
                         document.getElementById("password").setAttribute("value","");
                     }
                 });
-
             }
+            return false;
         }
 
         function activarmodalprogreso() {
@@ -159,6 +160,16 @@
             var portotal;
             var porparcial;
 
+            miEstadoParcial.innerHTML = "Progreso parcial: ";
+            miEstadoTotal.innerHTML = "Progreso total: ";
+            miBarraParcial.style = "width: 0%;";
+            miBarraTotal.style = "width: 0%;";
+            miBarraParcial.setAttribute("aria-valuenow",0);
+            miBarraTotal.setAttribute("aria-valuenow",0);
+            miBarraParcial.innerHTML = "";
+            miBarraTotal.innerHTML = "";
+
+
             setTimeout(function run() {
                 traerDatos();
                 if (estado != 'Completado') {
@@ -166,19 +177,11 @@
                 } else
                 {
                     terminar_proceso();
-                    $("#modalProgreso").modal("hide");
-                    alert("EL proceso se completo con éxito");
                     document.getElementById("btnbusqueda").removeAttribute("disabled");
                     document.getElementById("btnprogreso").setAttribute("disabled","true");
                     document.getElementById("formulario").reset();
-                    miEstadoParcial.innerHTML = "Progreso parcial: ";
-                    miEstadoTotal.innerHTML = "Progreso total: ";
-                    miBarraParcial.style = "width: 0%;";
-                    miBarraTotal.style = "width: 0%;";
-                    miBarraParcial.setAttribute("aria-valuenow","0");
-                    miBarraTotal.setAttribute("aria-valuenow","0");
-                    miBarraParcial.innerHTML = "";
-                    miBarraTotal.innerHTML = "";
+                    $("#modalProgreso").modal("hide");
+                    alert("EL proceso se completo con éxito");
                 }
             }, 1000);
 
@@ -200,6 +203,12 @@
                     miBarraTotal.innerHTML = portotal + "%";
                 });
             }
+        }
+
+        if (formulario.attachEvent) {
+            formulario.attachEvent("submit", iniciaproceso);
+        } else {
+            formulario.addEventListener("submit", iniciaproceso);
         }
 
     </script>

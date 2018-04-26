@@ -1,4 +1,4 @@
-from flask import Flask, flash, redirect, render_template, request, session, json
+from flask import Flask, flash, render_template, request, session, json
 import os, datetime
 import funciones
 import moduloimap
