@@ -22,7 +22,7 @@ class Correo:
 def cargar_cfg():
     temp_cfg = {}
     try:
-        jsonarch = open('../config.json','r',encoding='utf-8')
+        jsonarch = open('config.json','r',encoding='utf-8')
         temp_cfg = json.load(jsonarch)
     except FileNotFoundError:
         raise Excepcion("Error: No se encontro el archivo de configuracion, verifique que la ruta y el nombre sean correctos.")
